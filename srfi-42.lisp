@@ -6,6 +6,14 @@
 
 (in-suite srfi-42)
 
+;;; Adapted from SBCL.
+(defmacro named-let (name binds &body body)
+  (dolist (x binds)
+    (unless (= 2 (length x))
+      (error "malformed NAMED-LET variable spec: ~S" x)))
+  `(labels ((,name ,(mapcar #'first binds) ,@body))
+     (,name ,@(mapcar #'second binds))))
+
 ; <PLAINTEXT>
 ; Eager Comprehensions in [outer..inner|expr]-Convention
 ; ======================================================
@@ -110,27 +118,28 @@
 (define-syntax |DO-EC:DO|
   (syntax-rules (:do let)
 
-    ; reentry point (*) -> generate code
+; reentry point (*) -> generate code
     ((|DO-EC:DO| cmd
-               (:do (let obs oc ***)
-                    lbs
-                    ne1?
-                    (let ibs ic ***)
-                    ne2?
-                    (ls ***) ))
-     (ec-simplify
-       (let obs
-         oc ***
-         (sb-int::named-let loop1 lbs
-           (ec-simplify
+                 (:do (let obs oc ***)
+                       lbs
+                   ne1?
+                   (let ibs ic ***)
+                   ne2?
+                   (ls ***) ))
+     (with ((loop1 (gensym "LOOP-")))
+       (ec-simplify
+        (let obs
+          oc ***
+          (named-let loop1 lbs
+            (ec-simplify
              (if ne1?
                  (ec-simplify
-                   (let ibs
-                      ic ***
-                      cmd
-                      (ec-simplify
-                        (if ne2?
-                            (loop1 ls ***) )))))))))) ))
+                  (let ibs
+                    ic ***
+                    cmd
+                    (ec-simplify
+                     (if ne2?
+                         (loop1 ls ***) ))))))))))) ))
 
 
 ; (ec-simplify <expression>)
@@ -643,7 +652,11 @@
                 (:integers i)
                 (:dispatched var dispatch arg1 arg ***) ))
     ((:dispatched cc var dispatch arg1 arg ***)
-     (:do cc
+     (with ((d (gensym "D-"))
+            (args (gensym "ARGS-"))
+            (g (gensym "G-"))
+            (empty (gensym "EMPTY-")) )
+      (:do cc
           (let ((d dispatch)
                 (args (list arg1 arg ***))
                 (g nil)
@@ -655,7 +668,7 @@
           (not (eq var empty))
           (let ())
           t
-          ((funcall g empty)) ))))
+          ((funcall g empty)) )))))
 
 ; Comment: The unique object empty is created as a newly allocated
 ;   non-empty list. It is compared using eq? which distinguishes
@@ -827,14 +840,15 @@
      (fold3-ec x0 (nested) expression f1 f2) )
 
     ((fold3-ec x0 qualifier expression f1 f2)
-     (let ((result nil) (empty t))
-       (do-ec qualifier
-              (let ((value expression)) ; don't duplicate
-                (if empty
-                    (progn (setq result (f1 value))
-                           (setq empty nil) )
-                    (setq result (f2 value result)) )))
-       (if empty x0 result) ))))
+     (with ((result (gensym "RESULT-")))
+       (let ((result nil) (empty t))
+         (do-ec qualifier
+           (let ((value expression)) ; don't duplicate
+             (if empty
+                 (progn (setq result (f1 value))
+                        (setq empty nil) )
+                 (setq result (f2 value result)) )))
+         (if empty x0 result) )))))
 
 
 (define-syntax fold-ec
@@ -847,9 +861,10 @@
      (fold-ec x0 (nested) expression f2) )
 
     ((fold-ec x0 qualifier expression f2)
-     (let ((result x0))
-       (do-ec qualifier (setq result (f2 expression result)))
-       result ))))
+     (with ((result (gensym "RESULT-")))
+       (let ((result x0))
+         (do-ec qualifier (setq result (f2 expression result)))
+         result )))))
 
 
 ; ==========================================================================
@@ -871,17 +886,17 @@
   `(is (equal ,x ,y)))
 
 (test list-ec
-  (== (list-ec (\: i 10) i)
+  (== (list-ec (:- i 10) i)
       '(0 1 2 3 4 5 6 7 8 9))
-  (== (list-ec (\: i 5 10) i)
+  (== (list-ec (:- i 5 10) i)
       '(5 6 7 8 9))
-  (== (list-ec (\: i 10) (* i i))
+  (== (list-ec (:- i 10) (* i i))
       '(0 1 4 9 16 25 36 49 64 81))
-  (== (list-ec (\: i 10) (if (oddp i)) i)
+  (== (list-ec (:- i 10) (if (oddp i)) i)
       '(1 3 5 7 9))
-  (== (list-ec (\: i 10) (not (evenp i)) i)
+  (== (list-ec (:- i 10) (not (evenp i)) i)
       '(1 3 5 7 9))
-  (== (list-ec (\: i 10)
+  (== (list-ec (:- i 10)
                (:let sq (* i i))
                (if (evenp sq))
                sq)
