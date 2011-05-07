@@ -905,7 +905,7 @@
 (define-syntax append-ec
   (syntax-rules ()
     ((append-ec etc1 etc ***)
-     (apply append (list-ec etc1 etc ***)) )))
+     (apply #'append (list-ec etc1 etc ***)) )))
 
 (define-syntax string-ec
   (syntax-rules ()
