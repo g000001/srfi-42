@@ -741,7 +741,6 @@
       ((1) (let ((a1 (car args)))
              (cond
                ((listp a1)
-                (print a1)
                 (:generator-proc (:list a1)) )
                ((stringp a1)
                 (:generator-proc (:string a1)) )
