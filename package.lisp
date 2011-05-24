@@ -3,9 +3,11 @@
 (cl:in-package :cl-user)
 
 (defpackage :srfi-42
+  (:use)
   (:export :fold3-ec
            :fold-ec
            :list-ec
+           :do-ec
            :append-ec
            :string-ec
            :string-append-ec
@@ -18,7 +20,8 @@
            :last-ec
            :first-ec
            :any?-ec
-           :every?-ec))
+           :every?-ec
+           :index))
 
 (defpackage :srfi-42-internal
   (:use :srfi-42 :cl :fiveam :mbe))
