@@ -17,6 +17,7 @@
            :product-ec
            :min-ec
            :max-ec
+           :nested
            :last-ec
            :first-ec
            :any?-ec
