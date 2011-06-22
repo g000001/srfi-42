@@ -675,11 +675,12 @@
 ;   the object from any other object, according to R5RS 6.1.
 
 (define-syntax :generator-proc
-  (syntax-rules (:do let)
+  (syntax-rules (:do let t nil)
 
     ; call g with a variable, reentry at (**)
     ((:generator-proc (g arg ***))
-     (g (:generator-proc var) var arg ***) )
+     (with ((var (gensym)))
+       (g (:generator-proc var) var arg ***) ))
 
     ; reentry point (**) -> make the code from a single :do
     ((:generator-proc
@@ -690,28 +691,30 @@
             (let ((i v) ***) ic ***)
             ne2?
             (ls ***)) )
-     (ec-simplify
-      (let obs
-          oc ***
-          (let ((lv li) *** (ne2 t))
-            (ec-simplify
-             (let ((i nil) ***) ; v not yet valid
-               (lambda (empty)
-                 (if (and ne1? ne2)
-                     (ec-simplify
-                      (progn
-                        (setq i v) ***
-                        ic ***
-                        (let ((value var))
-                          (ec-simplify
-                           (if ne2?
-                               (ec-simplify
-                                (multiple-value-setq (lv ***) (values ls ***))
-                                ;; mbeだと 複雑な*** が展開できない?
-                                #|(progn (setq lv ls) ***)|# )
-                               (setq ne2 nil) ))
-                          value )))
-                     empty ))))))))
+     (with ((ne2 (gensym))
+            (value (gensym)))
+      (ec-simplify
+       (let obs
+         oc ***
+         (let ((lv li) *** (ne2 t))
+           (ec-simplify
+            (let ((i nil) ***) ; v not yet valid
+              (lambda (empty)
+                (if (and ne1? ne2)
+                    (ec-simplify
+                     (progn
+                       (setq i v) ***
+                       ic ***
+                       (let ((value var))
+                         (ec-simplify
+                          (if ne2?
+                              (ec-simplify
+                               (multiple-value-setq (lv ***) (values ls ***))
+                               ;; mbeだと 複雑な*** が展開できない?
+                               #|(progn (setq lv ls) ***)|# )
+                              (setq ne2 nil) ))
+                         value )))
+                    empty )))))))))
 
     ; silence warnings of some macro expanders
     ((:generator-proc var)
