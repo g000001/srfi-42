@@ -12,6 +12,7 @@
     (unless (= 2 (length x))
       (error "malformed NAMED-LET variable spec: ~S" x)))
   `(labels ((,name ,(mapcar #'first binds) ,@body))
+     (declare (optimize (debug 1)))
      (,name ,@(mapcar #'second binds))))
 
 ; <PLAINTEXT>
@@ -844,6 +845,7 @@
     ((fold3-ec x0 qualifier expression f1 f2)
      (with ((result (gensym "RESULT-")))
        (let ((result nil) (empty t))
+         (declare (optimize (debug 1)))
          (do-ec qualifier
            (let ((value expression)) ; don't duplicate
              (if empty
@@ -865,6 +867,7 @@
     ((fold-ec x0 qualifier expression f2)
      (with ((result (gensym "RESULT-")))
        (let ((result x0))
+         (declare (optimize (debug 1)))
          (do-ec qualifier (setq result (f2 expression result)))
          result )))))
 
@@ -873,10 +876,18 @@
 ; The comprehensions list-ec string-ec vector-ec etc.
 ; ==========================================================================
 
+#|(define-syntax list-ec
+  (syntax-rules ()
+    ((list-ec etc1 etc ***)
+     (nreverse (fold-ec '() etc1 etc *** cons)) )))|#
+
 (define-syntax list-ec
   (syntax-rules ()
     ((list-ec etc1 etc ***)
-     (reverse (fold-ec '() etc1 etc *** cons)) )))
+     (let ((ans (list '())))
+       (fold-ec ans etc1 etc *** (lambda (e acc)
+                                   (setf (cdr acc) (list e))))
+       (cdr ans)) )))
 
 ; Alternative: Reverse can safely be replaced by reverse! if you have it.
 ;
@@ -1010,6 +1021,7 @@
 
     ((first-ec default qualifier expression)
      (let ((result default) (stop nil))
+       (declare (optimize (debug 1)))
        (ec-guarded-do-ec
          stop
          (nested qualifier)
@@ -1088,6 +1100,3 @@
 
     ((every?-ec qualifier expression)
      (first-ec t qualifier (if (not expression)) nil) )))
-
-
-
