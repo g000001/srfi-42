@@ -884,10 +884,13 @@
 (define-syntax list-ec
   (syntax-rules ()
     ((list-ec etc1 etc ***)
-     (let ((ans (list '())))
-       (fold-ec ans etc1 etc *** (lambda (e acc)
-                                   (setf (cdr acc) (list e))))
-       (cdr ans)) )))
+     (with ((ans (gensym "ANS-"))
+            (e (gensym "E-"))
+            (acc (gensym "ACC-")))
+       (let ((ans (list '())))
+         (fold-ec ans etc1 etc *** (lambda (e acc)
+                                     (setf (cdr acc) (list e)) ))
+         (cdr ans) )) )))
 
 ; Alternative: Reverse can safely be replaced by reverse! if you have it.
 ;
