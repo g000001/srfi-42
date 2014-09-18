@@ -962,7 +962,7 @@
 
     ((vector-of-length-ec k qualifier expression)
      (let ((len k))
-       (let ((vec (make-vector len))
+       (let ((vec (cl:make-sequence 'cl:VECTOR len))
              (i 0) )
          (do-ec qualifier
                 (if (< i len)
