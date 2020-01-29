@@ -2,7 +2,7 @@
 
 (cl:in-package :cl-user)
 
-(defpackage :srfi-42
+(defpackage "https://github.com/g000001/srfi-42"
   (:use)
   (:export :fold3-ec
            :fold-ec
@@ -24,6 +24,9 @@
            :every?-ec
            :index))
 
-(defpackage :srfi-42-internal
-  (:use :srfi-42 :cl :fiveam :mbe))
+(defpackage "https://github.com/g000001/srfi-42#internals"
+  (:use "https://github.com/g000001/srfi-42"
+        :cl
+        :mbe
+        :fiveam))
 
